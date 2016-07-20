@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.TextView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -40,6 +41,9 @@ public class CharacterDetailFragment extends Fragment implements ICharacterDetai
     @BindView(R.id.webView)
     WebView webView;
 
+    @BindView(R.id.placeholderTextDisplay)
+    TextView placeholderTextDisplay;
+
     FictionalCharacter character = null;
 
     @Override
@@ -49,6 +53,9 @@ public class CharacterDetailFragment extends Fragment implements ICharacterDetai
 
         if (null != character)
         {
+            placeholderTextDisplay.setVisibility(View.GONE);
+            webView.setVisibility(View.VISIBLE);
+
             if (null == webView.getUrl() || !webView.getUrl().equals(character.getPageUrl()))
             {
                 webView.loadUrl(character.getPageUrl());

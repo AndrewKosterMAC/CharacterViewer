@@ -1,2 +1,3 @@
 <resources>
+    <string name="placeholderText">Click on a character to see more details.</string>
 </resources>
