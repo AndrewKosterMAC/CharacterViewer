@@ -73,10 +73,7 @@ public class DuckDuckGoSearchResult implements Parcelable
             {
                 DuckDuckGoSearchResult info = new DuckDuckGoSearchResult();
                 info.setHeading(source.readString());
-
-                List<FictionalCharacter> characters = new ArrayList<>();
-                source.readTypedList(characters, FictionalCharacter.CREATOR);
-                info.setCharacters(characters);
+                info.setCharacters(source.readArrayList(FictionalCharacter.class.getClassLoader()));
 
                 return info;
             }

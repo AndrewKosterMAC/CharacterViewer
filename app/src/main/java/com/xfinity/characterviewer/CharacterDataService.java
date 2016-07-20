@@ -8,6 +8,8 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import retrofit2.Call;
@@ -16,8 +18,14 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+/**
+ * Gets character data from a remote service and stores it as an in-memory data structure.
+ */
 public class CharacterDataService extends Service
 {
+    /**
+     * Allows other components to bind to the service.
+     */
     public class DataServiceBinder extends Binder
     {
         CharacterDataService getService()
@@ -28,10 +36,46 @@ public class CharacterDataService extends Service
 
     private IBinder binder = new DataServiceBinder();
 
-    public CharacterDataService()
+    private List<FictionalCharacter> allCharacters = new ArrayList<>();
+
+    public List<FictionalCharacter> getDisplayedCharacters()
     {
+        synchronized (characterListsLock)
+        {
+            return new ArrayList<>(displayedCharacters);
+        }
     }
 
+    private List<FictionalCharacter> displayedCharacters = new ArrayList<>();
+
+    private final Object characterListsLock = new Object();
+
+    public void filterDisplayedCharacters(String searchTerm)
+    {
+        synchronized (characterListsLock)
+        {
+            displayedCharacters.clear();
+
+            searchTerm = searchTerm.toLowerCase();
+
+            for (FictionalCharacter character : allCharacters)
+            {
+                if (null == searchTerm
+                        || searchTerm.length() < 1
+                        || character.getName().toLowerCase().contains(searchTerm)
+                        || character.getDescription().toLowerCase().contains(searchTerm)) {
+                    displayedCharacters.add(character);
+                }
+            }
+        }
+    }
+
+    /**
+     * Binds to another component via an Intent.
+     *
+     * @param intent the calling Intent.
+     * @return the Binder.
+     */
     @Override
     public IBinder onBind(Intent intent)
     {
@@ -82,27 +126,31 @@ public class CharacterDataService extends Service
                     {
                         DuckDuckGoSearchResult duckDuckGoSearchResult = response.body();
 
-                        for (Map<String, Object> characterData : duckDuckGoSearchResult.getRelatedTopics())
+                        synchronized (characterListsLock)
                         {
-                            FictionalCharacter character = new FictionalCharacter();
+                            for (Map<String, Object> characterData : duckDuckGoSearchResult.getRelatedTopics())
+                            {
+                                FictionalCharacter character = new FictionalCharacter();
 
-                            String[] characterTextParts = characterData.get("Text").toString().split(" - ");
+                                String[] characterTextParts = characterData.get("Text").toString().split(" - ");
 
-                            character.setName(characterTextParts[0]);
-                            character.setDescription(characterTextParts[1]);
+                                character.setName(characterTextParts[0]);
+                                character.setDescription(characterTextParts[1]);
 
-                            Map icon = (Map)characterData.get("Icon");
-                            String iconUrl = (String)icon.get("URL");
+                                Map icon = (Map) characterData.get("Icon");
+                                String iconUrl = (String) icon.get("URL");
 
-                            character.setIconUrl(iconUrl);
+                                character.setIconUrl(iconUrl);
 
-                            character.setPageUrl("https://duckduckgo.com/html/?q=" + character.getName());
+                                character.setPageUrl("https://duckduckgo.com/html/?q=" + character.getName());
 
-                            duckDuckGoSearchResult.getCharacters().add(character);
+                                allCharacters.add(character);
+                                //duckDuckGoSearchResult.getCharacters().add(character);
+                            }
                         }
 
                         Message message = Message.obtain();
-                        message.obj = duckDuckGoSearchResult;
+                        //message.obj = duckDuckGoSearchResult;
 
                         try
                         {
@@ -123,5 +171,12 @@ public class CharacterDataService extends Service
             }
         };
         thread.start();
+    }
+
+    /**
+     * Constructor.
+     */
+    public CharacterDataService()
+    {
     }
 }

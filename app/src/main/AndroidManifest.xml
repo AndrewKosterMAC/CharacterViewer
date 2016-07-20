@@ -26,5 +26,4 @@
 
         <activity android:name="com.xfinity.characterviewer.CharacterDetailActivity"></activity>
     </application>
-
 </manifest>

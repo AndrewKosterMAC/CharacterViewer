@@ -44,11 +44,7 @@ public class MainActivity extends AppCompatActivity
 
     RecyclerView.Adapter charactersListViewAdapter;
 
-    List<FictionalCharacter> allCharacters = new ArrayList<>();
-
-    List<FictionalCharacter> displayedCharacters = new ArrayList<>();
-
-    CharacterDataService characterDataService;
+    CharacterDataService characterDataService = null;
 
     private boolean characterDataServiceIsBound = false;
 
@@ -70,7 +66,12 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    public boolean isNetworkAvailable(NetworkInfo networkInfo)
+    private boolean isNetworkAvailable()
+    {
+        return isNetworkAvailable(((ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo());
+    }
+
+    private boolean isNetworkAvailable(NetworkInfo networkInfo)
     {
         return networkInfo != null && networkInfo.isAvailable();
     }
@@ -80,36 +81,13 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void handleMessage(Message message)
         {
-
-            DuckDuckGoSearchResult duckDuckGoSearchResult = (DuckDuckGoSearchResult)message.obj;
-
-            for (FictionalCharacter character : duckDuckGoSearchResult.getCharacters())
+            if (null != characterDataService)
             {
-                allCharacters.add(character);
+                characterDataService.filterDisplayedCharacters(searchField.getText().toString());
+                charactersListViewAdapter.notifyDataSetChanged();
             }
-
-            filterDisplayedCharacters();
-            charactersListViewAdapter.notifyDataSetChanged();
         }
     };
-
-    private void filterDisplayedCharacters()
-    {
-        displayedCharacters.clear();
-
-        String searchTerm = searchField.getText().toString().toLowerCase();
-
-        for (FictionalCharacter character : allCharacters)
-        {
-            if (null == searchTerm
-                || searchTerm.length() < 1
-                || character.getName().toLowerCase().contains(searchTerm)
-                || character.getDescription().toLowerCase().contains(searchTerm))
-            {
-                displayedCharacters.add(character);
-            }
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -135,7 +113,7 @@ public class MainActivity extends AppCompatActivity
             public ItemsViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
             {
                 View itemView
-                        = LayoutInflater.from(parent.getContext())
+                    = LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.character_list_item, parent, false);
 
                 return new ItemsViewHolder(itemView);
@@ -144,17 +122,25 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onBindViewHolder(ItemsViewHolder holder, int position)
             {
-                FictionalCharacter character = displayedCharacters.get(position);
+                if (null != characterDataService)
+                {
+                    FictionalCharacter character = characterDataService.getDisplayedCharacters().get(position);
 
-                holder.setName(character.getName());
-                holder.setDescription(character.getDescription());
-                holder.setImage(character.getIconUrl());
+                    holder.setName(character.getName());
+                    holder.setDescription(character.getDescription());
+                    holder.setImage(character.getIconUrl());
+                }
             }
 
             @Override
             public int getItemCount()
             {
-                return displayedCharacters.size();
+                if (null == characterDataService)
+                {
+                    return 0;
+                }
+
+                return characterDataService.getDisplayedCharacters().size();
             }
         };
         charactersListView.setAdapter(charactersListViewAdapter);
@@ -164,20 +150,23 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view, int position)
             {
-                FictionalCharacter character = displayedCharacters.get(position);
-
-                if (getResources().getBoolean(R.bool.isTablet))
+                if (null != characterDataService)
                 {
-                    ICharacterDetailFragment characterDetailFragment = (ICharacterDetailFragment)getSupportFragmentManager().findFragmentById(R.id.characterDetailFragment);
+                    FictionalCharacter character = characterDataService.getDisplayedCharacters().get(position);
 
-                    characterDetailFragment.setCharacter(character);
-                }
-                else
-                {
-                    Intent intent = new Intent(MainActivity.this, CharacterDetailActivity.class);
-                    intent.putExtra("character", (Parcelable)character);
+                    if (getResources().getBoolean(R.bool.isTablet))
+                    {
+                        ICharacterDetailFragment characterDetailFragment = (ICharacterDetailFragment)getSupportFragmentManager().findFragmentById(R.id.characterDetailFragment);
 
-                    startActivity(intent);
+                        characterDetailFragment.setCharacter(character);
+                    }
+                    else
+                    {
+                        Intent intent = new Intent(MainActivity.this, CharacterDetailActivity.class);
+                        intent.putExtra("character", (Parcelable)character);
+
+                        startActivity(intent);
+                    }
                 }
             }
 
@@ -190,7 +179,7 @@ public class MainActivity extends AppCompatActivity
 
         Intent intent = new Intent(this, CharacterDataService.class);
         intent.putExtra("dataMessenger", new Messenger(characterDataServiceMessageHandler));
-        intent.putExtra("isNetworkAvailable", isNetworkAvailable(((ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo()));
+        intent.putExtra("isNetworkAvailable", isNetworkAvailable());
 
         startService(intent);
         bindService(intent, characterDataServiceConnection, Context.BIND_AUTO_CREATE);
@@ -200,20 +189,21 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2)
             {
-
             }
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2)
             {
-
             }
 
             @Override
             public void afterTextChanged(Editable editable)
             {
-                filterDisplayedCharacters();
-                charactersListViewAdapter.notifyDataSetChanged();
+                if (null != characterDataService)
+                {
+                    characterDataService.filterDisplayedCharacters(searchField.getText().toString());
+                    charactersListViewAdapter.notifyDataSetChanged();
+                }
             }
         });
     }
@@ -233,12 +223,10 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onCharactersListFragmentInteraction(Uri uri)
     {
-
     }
 
     @Override
     public void onCharacterDetailFragmentInteraction(Uri uri)
     {
-
     }
 }
