@@ -16,4 +16,4 @@ Technology choices:
 
 - Android resources API, to avoid hardcoding margin and padding sizes in the layouts.
 
-- WebView, to re-use existing HTML documents inside the Android app instead of remaking them from scratch.# CharacterViewer
+- WebView, to re-use existing HTML documents inside the Android app instead of remaking them from scratch.
