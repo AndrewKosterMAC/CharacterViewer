@@ -25,10 +25,6 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -81,16 +77,18 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void handleMessage(Message message)
         {
-            if (null != characterDataService)
-            {
-                characterDataService.filterDisplayedCharacters(searchField.getText().toString());
-                charactersListViewAdapter.notifyDataSetChanged();
-            }
+
+        if (null != characterDataService)
+        {
+            characterDataService.filterDisplayedCharacters(searchField.getText().toString());
+            charactersListViewAdapter.notifyDataSetChanged();
+        }
         }
     };
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
 
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
@@ -145,7 +143,7 @@ public class MainActivity extends AppCompatActivity
         };
         charactersListView.setAdapter(charactersListViewAdapter);
 
-        charactersListView.addOnItemTouchListener(new RecyclerTouchListener(this, charactersListView, new RecyclerClickListener()
+        charactersListView.addOnItemTouchListener(new RecyclerTouchListener(this, charactersListView, new IRecyclerClickListener()
         {
             @Override
             public void onClick(View view, int position)
@@ -173,7 +171,6 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onLongClick(View view, int position)
             {
-
             }
         }));
 

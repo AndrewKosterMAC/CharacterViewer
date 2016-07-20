@@ -36,6 +36,5 @@ public class CharacterDetailActivity extends AppCompatActivity
     @Override
     public void onCharacterDetailFragmentInteraction(Uri uri)
     {
-
     }
 }

@@ -110,64 +110,62 @@ public class CharacterDataService extends Service
             @Override
             public void run()
             {
-                Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("http://api.duckduckgo.com/")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
 
-                IDuckDuckGoCharacterApi service = retrofit.create(IDuckDuckGoCharacterApi.class);
+            Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://api.duckduckgo.com/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
 
-                Call<DuckDuckGoSearchResult> call = service.getCharacters();
+            IDuckDuckGoCharacterApi service = retrofit.create(IDuckDuckGoCharacterApi.class);
 
-                call.enqueue(new Callback<DuckDuckGoSearchResult>()
+            Call<DuckDuckGoSearchResult> call = service.getCharacters();
+
+            call.enqueue(new Callback<DuckDuckGoSearchResult>()
+            {
+                @Override
+                public void onResponse(Call<DuckDuckGoSearchResult> call, Response<DuckDuckGoSearchResult> response)
                 {
-                    @Override
-                    public void onResponse(Call<DuckDuckGoSearchResult> call, Response<DuckDuckGoSearchResult> response)
+                    DuckDuckGoSearchResult duckDuckGoSearchResult = response.body();
+
+                    synchronized (characterListsLock)
                     {
-                        DuckDuckGoSearchResult duckDuckGoSearchResult = response.body();
-
-                        synchronized (characterListsLock)
+                        for (Map<String, Object> characterData : duckDuckGoSearchResult.getRelatedTopics())
                         {
-                            for (Map<String, Object> characterData : duckDuckGoSearchResult.getRelatedTopics())
-                            {
-                                FictionalCharacter character = new FictionalCharacter();
+                            FictionalCharacter character = new FictionalCharacter();
 
-                                String[] characterTextParts = characterData.get("Text").toString().split(" - ");
+                            String[] characterTextParts = characterData.get("Text").toString().split(" - ");
 
-                                character.setName(characterTextParts[0]);
-                                character.setDescription(characterTextParts[1]);
+                            character.setName(characterTextParts[0]);
+                            character.setDescription(characterTextParts[1]);
 
-                                Map icon = (Map) characterData.get("Icon");
-                                String iconUrl = (String) icon.get("URL");
+                            Map icon = (Map) characterData.get("Icon");
+                            String iconUrl = (String) icon.get("URL");
 
-                                character.setIconUrl(iconUrl);
+                            character.setIconUrl(iconUrl);
 
-                                character.setPageUrl("https://duckduckgo.com/html/?q=" + character.getName());
+                            character.setPageUrl("https://duckduckgo.com/html/?q=" + character.getName());
 
-                                allCharacters.add(character);
-                                //duckDuckGoSearchResult.getCharacters().add(character);
-                            }
-                        }
-
-                        Message message = Message.obtain();
-                        //message.obj = duckDuckGoSearchResult;
-
-                        try
-                        {
-                            dataMessenger.send(message);
-                        }
-                        catch (RemoteException ex)
-                        {
-                            throw new RuntimeException(ex);
+                            allCharacters.add(character);
                         }
                     }
 
-                    @Override
-                    public void onFailure(Call<DuckDuckGoSearchResult> call, Throwable t)
-                    {
+                    Message message = Message.obtain();
 
+                    try
+                    {
+                        dataMessenger.send(message);
                     }
-                });
+                    catch (RemoteException ex)
+                    {
+                        throw new RuntimeException(ex);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<DuckDuckGoSearchResult> call, Throwable t)
+                {
+                }
+            });
             }
         };
         thread.start();

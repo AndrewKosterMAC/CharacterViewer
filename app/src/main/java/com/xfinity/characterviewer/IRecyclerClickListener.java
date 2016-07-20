@@ -2,7 +2,7 @@ package com.xfinity.characterviewer;
 
 import android.view.View;
 
-public interface RecyclerClickListener
+public interface IRecyclerClickListener
 {
     void onClick(View view, int position);
 

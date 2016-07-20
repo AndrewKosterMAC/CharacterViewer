@@ -40,18 +40,6 @@ public class DuckDuckGoSearchResult implements Parcelable
         relatedTopics = value;
     }
 
-    public List<FictionalCharacter> getCharacters()
-    {
-        return characters;
-    }
-
-    private List<FictionalCharacter> characters = new ArrayList<>();
-
-    public void setCharacters(List<FictionalCharacter> value)
-    {
-        characters = value;
-    }
-
     @Override
     public int describeContents()
     {
@@ -62,7 +50,6 @@ public class DuckDuckGoSearchResult implements Parcelable
     public void writeToParcel(Parcel dest, int i)
     {
         dest.writeString(getHeading());
-        dest.writeTypedList(getCharacters());
     }
 
     public static final Parcelable.Creator<DuckDuckGoSearchResult> CREATOR =
@@ -73,7 +60,6 @@ public class DuckDuckGoSearchResult implements Parcelable
             {
                 DuckDuckGoSearchResult info = new DuckDuckGoSearchResult();
                 info.setHeading(source.readString());
-                info.setCharacters(source.readArrayList(FictionalCharacter.class.getClassLoader()));
 
                 return info;
             }
