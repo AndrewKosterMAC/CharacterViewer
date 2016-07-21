@@ -1,3 +1,4 @@
 <resources>
-    <string name="placeholderText">Click on a character to see more details.</string>
+    <string name="placeholder_text">Click on a character to see more details.</string>
+    <string name="network_not_available">Network not available.</string>
 </resources>

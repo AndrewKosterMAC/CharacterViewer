@@ -14,7 +14,7 @@
         android:id="@+id/placeholderTextDisplay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/placeholderText"
+        android:text="@string/placeholder_text"
         android:textAlignment="center"
         android:padding="@dimen/list_item_horizontal_margin" />
 </RelativeLayout>

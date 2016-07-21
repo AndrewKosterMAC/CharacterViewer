@@ -3,10 +3,12 @@ package com.xfinity.characterviewer;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -24,14 +26,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity
     implements CharactersListFragment.OnFragmentInteractionListener,
-        CharacterDetailFragment.OnFragmentInteractionListener
+        CharacterDetailFragment.OnFragmentInteractionListener,
+        NetworkStateReceiver.NetworkStateReceiverListener
 {
+    @BindView(R.id.networkStatusDisplay)
+    TextView networkStatusDisplay;
+
     @BindView(R.id.searchField)
     EditText searchField;
 
@@ -43,6 +50,8 @@ public class MainActivity extends AppCompatActivity
     CharacterDataService characterDataService = null;
 
     private boolean characterDataServiceIsBound = false;
+
+    private NetworkStateReceiver networkStateReceiver = null;
 
     private ServiceConnection characterDataServiceConnection = new ServiceConnection()
     {
@@ -71,20 +80,6 @@ public class MainActivity extends AppCompatActivity
     {
         return networkInfo != null && networkInfo.isAvailable();
     }
-
-    Handler characterDataServiceMessageHandler = new Handler()
-    {
-        @Override
-        public void handleMessage(Message message)
-        {
-
-        if (null != characterDataService)
-        {
-            characterDataService.filterDisplayedCharacters(searchField.getText().toString());
-            charactersListViewAdapter.notifyDataSetChanged();
-        }
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -174,6 +169,37 @@ public class MainActivity extends AppCompatActivity
             }
         }));
 
+        if (isNetworkAvailable())
+        {
+            startDataService();
+        }
+        else
+        {
+            networkStatusDisplay.setVisibility(View.VISIBLE);
+            networkStatusDisplay.setText(getResources().getText(R.string.network_not_available));
+
+            networkStateReceiver = new NetworkStateReceiver();
+            networkStateReceiver.addListener(this);
+            this.registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
+        }
+    }
+
+    private void startDataService()
+    {
+        Handler characterDataServiceMessageHandler = new Handler()
+        {
+            @Override
+            public void handleMessage(Message message)
+            {
+
+                if (null != characterDataService)
+                {
+                    characterDataService.filterDisplayedCharacters(searchField.getText().toString());
+                    charactersListViewAdapter.notifyDataSetChanged();
+                }
+            }
+        };
+
         Intent intent = new Intent(this, CharacterDataService.class);
         intent.putExtra("dataMessenger", new Messenger(characterDataServiceMessageHandler));
         intent.putExtra("isNetworkAvailable", isNetworkAvailable());
@@ -224,6 +250,20 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onCharacterDetailFragmentInteraction(Uri uri)
+    {
+    }
+
+    @Override
+    public void networkAvailable()
+    {
+        networkStatusDisplay.setVisibility(View.GONE);
+        networkStatusDisplay.setText("");
+
+        startDataService();
+    }
+
+    @Override
+    public void networkUnavailable()
     {
     }
 }

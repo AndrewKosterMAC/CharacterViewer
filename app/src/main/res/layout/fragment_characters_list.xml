@@ -4,6 +4,12 @@
     android:layout_height="match_parent"
     tools:context="com.xfinity.characterviewer.CharactersListFragment"
     android:orientation="vertical">
+    <TextView
+        android:id="@+id/networkStatusDisplay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/holo_red_dark"
+        android:visibility="gone" />
     <EditText
         android:id="@+id/searchField"
         android:layout_width="match_parent"
